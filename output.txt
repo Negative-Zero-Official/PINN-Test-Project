@@ -1,16 +1,16 @@
 ==========  Benchmarking 100,000 points  ==========
-CPU time: 37.72819999994681 ms
-PINN (GPU) time: 0.33475199341773987 ms
-Speedup Factor: 112.7049x
+CPU time: 31.461699999908888 ms
+PINN (GPU) time: 0.22323200106620789 ms
+Speedup Factor: 140.9372x
 ==========  Benchmarking 200,000 points  ==========
-CPU time: 67.59250000004613 ms
-PINN (GPU) time: 0.5799679756164551 ms
-Speedup Factor: 116.5452x
+CPU time: 70.7127999999102 ms
+PINN (GPU) time: 0.6017280220985413 ms
+Speedup Factor: 117.5162x
 ==========  Benchmarking 1,000,000 points  ==========
-CPU time: 241.45290000024033 ms
-PINN (GPU) time: 4.427328109741211 ms
-Speedup Factor: 54.5369x
+CPU time: 275.8269000000837 ms
+PINN (GPU) time: 4.9871039390563965 ms
+Speedup Factor: 55.3080x
 ==========  Benchmarking 10,000,000 points  ==========
-CPU time: 2023.6842999997862 ms
-PINN (GPU) time: 41.39680099487305 ms
-Speedup Factor: 48.8850x
+CPU time: 2163.0922999997892 ms
+PINN (GPU) time: 41.169471740722656 ms
+Speedup Factor: 52.5412x
