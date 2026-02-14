@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 import time
 import math
+import sys
 
 def theoretical_ans(theta_0, g, L, t):
     """Calculates the theoretical value using the conventional method
@@ -40,7 +41,6 @@ def gpu_warmup(model, input_tensor, iterations=5):
 
     # Synchronize to ensure all warm-up operations are complete
     torch.cuda.synchronize() 
-    # print(f"GPU warm-up complete after {iterations} iterations.")
 
 def benchmark(num_points, model, device, theta_0, g, L):
     """Runs a benchmark that compares CPU calculation and PINN performance
@@ -99,53 +99,61 @@ class PendulumPINN(nn.Module):
         return self.net(t)
 
 def main():
-    device = torch.device("cuda")
-    model = PendulumPINN().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
     
-    losses = []
-
-    g = 9.81
-    L = 1.0
-
-    t_collo = torch.linspace(0, 2, 500).view(-1, 1).to(device).requires_grad_(True)
-
-    t_initial = torch.tensor([[0.0]], device=device, requires_grad=True)
-    theta_0 = 1.0
-    v_0 = 0.0
-
-    for _ in tqdm(range(5001), desc="Training Model"):
-        optimizer.zero_grad()
-        
-        theta = model(t_collo)
-        
-        theta_t = torch.autograd.grad(theta, t_collo, torch.ones_like(theta), create_graph=True)[0]
-        
-        theta_tt = torch.autograd.grad(theta_t, t_collo, torch.ones_like(theta_t), create_graph=True)[0]
-        
-        phys_residual = theta_tt + (g/L) * theta
-        loss_phys = torch.mean(phys_residual**2)
-        
-        theta_init_pred = model(t_initial)
-        loss_pos = torch.mean((theta_init_pred - theta_0)**2)
-        
-        theta_t_init = torch.autograd.grad(theta_init_pred, t_initial, torch.ones_like(theta_init_pred), create_graph=True)[0]
-        loss_vel = torch.mean((theta_t_init - v_0)**2)
-        
-        loss = loss_phys + 100.0 * (loss_pos + loss_vel)
-        losses.append(loss.cpu().detach())
-        
-        loss.backward()
-        optimizer.step()
+    original = sys.stdout
     
-    plt.plot(range(5001), losses)
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.title("Epoch vs. Loss")
-    plt.show()
+    with open('output.txt', 'w') as out_file:
+        sys.stdout = out_file
     
-    for n in [1e+5, 2e+5, 1e+6, 1e+7]:
-        benchmark(n, model, device, theta_0, g, L)
+        device = torch.device("cuda")
+        model = PendulumPINN().to(device)
+        optimizer = optim.Adam(model.parameters(), lr=1e-3)
+        
+        losses = []
+
+        g = 9.81
+        L = 1.0
+
+        t_collo = torch.linspace(0, 2, 500).view(-1, 1).to(device).requires_grad_(True)
+
+        t_initial = torch.tensor([[0.0]], device=device, requires_grad=True)
+        theta_0 = 1.0
+        v_0 = 0.0
+
+        for _ in tqdm(range(5001), desc="Training Model"):
+            optimizer.zero_grad()
+            
+            theta = model(t_collo)
+            
+            theta_t = torch.autograd.grad(theta, t_collo, torch.ones_like(theta), create_graph=True)[0]
+            
+            theta_tt = torch.autograd.grad(theta_t, t_collo, torch.ones_like(theta_t), create_graph=True)[0]
+            
+            phys_residual = theta_tt + (g/L) * theta
+            loss_phys = torch.mean(phys_residual**2)
+            
+            theta_init_pred = model(t_initial)
+            loss_pos = torch.mean((theta_init_pred - theta_0)**2)
+            
+            theta_t_init = torch.autograd.grad(theta_init_pred, t_initial, torch.ones_like(theta_init_pred), create_graph=True)[0]
+            loss_vel = torch.mean((theta_t_init - v_0)**2)
+            
+            loss = loss_phys + 100.0 * (loss_pos + loss_vel)
+            losses.append(loss.cpu().detach())
+            
+            loss.backward()
+            optimizer.step()
+        
+        plt.plot(range(5001), losses)
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        plt.title("Epoch vs. Loss")
+        plt.show()
+        
+        for n in [1e+5, 2e+5, 1e+6, 1e+7]:
+            benchmark(n, model, device, theta_0, g, L)
+        
+        sys.stdout = original
 
 if __name__ == "__main__":
     main()
